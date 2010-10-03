@@ -7,8 +7,14 @@ $ ->
     dot: (x, y, w, h) ->
       @context.fillRect x, y, w, h
 
-    colour: (colour) ->
-      @context.fillStyle = colour
+    fill_colour: (col) ->
+      @context.fillStyle = col
+
+    stroke_colour: (col) ->
+      @context.strokeStyle = col
+
+    clear: ->
+      @context.fillRect 0, 0, @context.canvas.width, @context.canvas.height
 
   class Colour
 
@@ -44,12 +50,12 @@ $ ->
       @colour = new Colour
 
     move: (distance) ->
-      @canvas.colour @colour.to_rgb
+      @canvas.stroke_colour @colour.to_rgb()
       @canvas.context.moveTo @x, @y 
       @x += Math.sin(@heading) * distance
       @y += Math.cos(@heading) * distance
       @canvas.context.lineTo @x, @y 
-      @canvas.dot @x, @y, 1, 1 
+      @canvas.context.stroke()
 
 
     turn: (angle) ->
@@ -76,6 +82,8 @@ $ ->
     clearInterval timer
 
   canvas = new Canvas 'turtles'
+  canvas.fill_colour "rgb(0, 0, 0)"
+  canvas.clear()
   turtle = new Turtle canvas
   timer = null
   start()
