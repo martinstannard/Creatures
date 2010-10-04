@@ -14,8 +14,14 @@ $ ->
       @context.strokeStyle = col
 
     clear: ->
-      @context.fillRect 0, 0, @context.canvas.width, @context.canvas.height
+      @context.clearRect 0, 0, @context.canvas.width, @context.canvas.height
 
+    h: ->
+      @context.canvas.height
+
+    w: ->
+      @context.canvas.width
+      
   class Colour
 
     constructor: ->
@@ -43,48 +49,70 @@ $ ->
 
   class Turtle
 
-    constructor: (@canvas) ->
-      @x = 200.0
-      @y = 200.0
-      @heading = 0
+    constructor: (@canvas, @image) ->
+      @x = @canvas.w()/2.0
+      @y = @canvas.h()/2.0
+      @heading = (Math.random(1000)/1000.0) * 6.283
       @colour = new Colour
 
     move: (distance) ->
-      @canvas.stroke_colour @colour.to_rgb()
-      @canvas.context.moveTo @x, @y 
+      @canvas.fill_colour(@colour.to_rgb())
+      #@canvas.stroke_colour rand_colour()
+      #@canvas.context.moveTo @x, @y 
       @x += Math.sin(@heading) * distance
       @y += Math.cos(@heading) * distance
-      @canvas.context.lineTo @x, @y 
-      @canvas.context.stroke()
-
+      #@canvas.context.lineTo @x, @y 
+      #@canvas.context.stroke()
+      #@canvas.dot(@x, @y, 6, 6)
+      @canvas.context.save()
+      @canvas.context.translate(-16, -16)
+      @canvas.context.rotate(@heading)
+      #@canvas.context.translate(@x, @y)
+      @canvas.context.drawImage(@image, @x, @y)
+      @canvas.context.restore()
+      @x += @canvas.w() if @x < 0
+      @x -= @canvas.w() if @x > @canvas.w()
+      @y += @canvas.h() if @y < 0
+      @y -= @canvas.h() if @y > @canvas.h()
 
     turn: (angle) ->
       @heading += angle
 
+    tick: ->
+      @turn((randint(50) - 25.0) / 100.0)
+      @move 2.0 
+
   randint = (ceil) ->
     Math.floor(Math.random()*ceil)
+
+  rand_colour = ->
+    "rgb(#{randint(255)},#{randint(255)},#{randint(255)})"
+
 
   modded = (n, mod) ->
     (n + mod) % mod
 
-
-  circle = (turtle) ->
-    turtle.turn randint(10)/100.0
-    turtle.move 5.0 
-
   start = ->
-    setInterval(
+    timer = setInterval(
     ->
-      circle turtle
-    , 1)
+      canvas.clear()
+      turtle.tick() for turtle in turtles
+    , 5)
 
   stop = ->
     clearInterval timer
 
+  img = new Image
+  img.onload = ->
+    console.log 'image loaded'
+
+  img.src = 'images/turtle.png'
   canvas = new Canvas 'turtles'
-  canvas.fill_colour "rgb(0, 0, 0)"
-  canvas.clear()
-  turtle = new Turtle canvas
+  #canvas.fill_colour "rgb(0, 0, 0)"
+  turtles = []
+  for num in [1..1] 
+    turtles.push new Turtle canvas, img
   timer = null
   start()
+
 
