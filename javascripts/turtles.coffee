@@ -52,23 +52,19 @@ $ ->
     constructor: (@canvas, @image) ->
       @x = @canvas.w()/2.0
       @y = @canvas.h()/2.0
-      @heading = (Math.random(1000)/1000.0) * 6.283
+      @heading = Math.random() * 1000.0
       @colour = new Colour
+      @distance_to_food = 1000.0
+      @closer = false
 
     move: (distance) ->
-      @canvas.fill_colour(@colour.to_rgb())
-      #@canvas.stroke_colour rand_colour()
-      #@canvas.context.moveTo @x, @y 
       @x += Math.sin(@heading) * distance
       @y += Math.cos(@heading) * distance
-      #@canvas.context.lineTo @x, @y 
-      #@canvas.context.stroke()
-      #@canvas.dot(@x, @y, 6, 6)
       @canvas.context.save()
-      @canvas.context.translate(-16, -16)
-      @canvas.context.rotate(@heading)
-      #@canvas.context.translate(@x, @y)
-      @canvas.context.drawImage(@image, @x, @y)
+      @canvas.context.translate(@x+8, @y+8)
+      @canvas.context.rotate(-@heading)
+      @canvas.context.translate(-8, -8)
+      @canvas.context.drawImage(@image, 0, 0)
       @canvas.context.restore()
       @x += @canvas.w() if @x < 0
       @x -= @canvas.w() if @x > @canvas.w()
@@ -79,15 +75,36 @@ $ ->
       @heading += angle
 
     tick: ->
-      @turn((randint(50) - 25.0) / 100.0)
+      @turn 0.6 if not @closer
+      @turn((randint(10) - 5) / 50.0)
       @move 2.0 
 
+    smell: (food) ->
+      distance_now = Math.sqrt(((@x - food.x) * (@x - food.x)) + ((@y - food.y) * (@y - food.y))) 
+      @closer = distance_now < @distance_to_food
+      @distance_to_food = distance_now
+      food = new Food if @distance_to_food < 5
+
+  class Food
+
+    constructor: ->
+      @colour = "rgb(0, 255, 0)"
+      @x = Math.random() * 640
+      @y = Math.random() * 480
+
+    draw: (canvas) ->
+      canvas.fill_colour @colour
+      canvas.dot @x, @y, 4, 4 
+
+    move: ->
+      @x = Math.random() * 640
+      @y = Math.random() * 480
+      
   randint = (ceil) ->
     Math.floor(Math.random()*ceil)
 
   rand_colour = ->
     "rgb(#{randint(255)},#{randint(255)},#{randint(255)})"
-
 
   modded = (n, mod) ->
     (n + mod) % mod
@@ -96,8 +113,11 @@ $ ->
     timer = setInterval(
     ->
       canvas.clear()
+      food.draw(canvas)
+      turtle.smell(food) for turtle in turtles
       turtle.tick() for turtle in turtles
-    , 5)
+      if Math.random() < 0.01 then food.move()
+    , 50)
 
   stop = ->
     clearInterval timer
@@ -109,9 +129,13 @@ $ ->
   img.src = 'images/turtle.png'
   canvas = new Canvas 'turtles'
   #canvas.fill_colour "rgb(0, 0, 0)"
+  #canvas.context.global_alpha = 0.5
   turtles = []
-  for num in [1..1] 
+  for num in [1..10] 
     turtles.push new Turtle canvas, img
+  
+  food = new Food
+
   timer = null
   start()
 
