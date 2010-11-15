@@ -22,8 +22,9 @@ $ ->
     w: ->
       @context.canvas.width
 
-    text: (text, x, y) ->
-      @context.canvas.strokeText(text, x, y)
+    write: (text, x, y, colour) ->
+      @context.strokeStyle = colour
+      @context.strokeText(text, x, y)
       
   class Colour
 
@@ -37,6 +38,12 @@ $ ->
 
     to_hex: ->
       "#" + @num_to_hex(@r) + @num_to_hex(@g) + @num_to_hex(@b)
+
+    health: (health) ->
+      @r = 255 - Math.min(health, 255)
+      @g = Math.min(health, 255)
+      @b = 0
+      @to_rgb()
 
     num_to_hex: (n) -> 
       if (n == null) 
@@ -76,7 +83,8 @@ $ ->
       @x -= @canvas.w() if @x > @canvas.w()
       @y += @canvas.h() if @y < 0
       @y -= @canvas.h() if @y > @canvas.h()
-      @canvas.text(@health, @x, @y)
+      c = new Colour
+      @canvas.write(@health, @x, @y, c.health(@health))
 
     turn: (angle) ->
       @heading += angle
