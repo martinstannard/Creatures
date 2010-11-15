@@ -60,14 +60,16 @@ $ ->
   class Turtle
 
     constructor: (@canvas, @image) ->
-      @health = 200
-      @x = @canvas.w()/2.0
-      @y = @canvas.h()/2.0
+      @health = 500
+      @x = randint(@canvas.w())
+      @y = randint(@canvas.h())
       @heading = Math.random() * 1000.0
       @colour = new Colour
       @distance_to_food = 1000.0
       @closer = false
       @seek_turn = (randint(100) - 50) / 50.0
+      @rand_turn = Math.random()
+      console.log @seek_turn
       @speed = randint(500) / 100.0
 
     move: (distance) ->
@@ -91,7 +93,7 @@ $ ->
 
     tick: ->
       @turn @seek_turn if not @closer
-      @turn((randint(10) - 5) / 50.0)
+      @turn (Math.random() * @rand_turn) - (@rand_turn / 2.0)
       @move @speed
       @health = @health - 1
 
