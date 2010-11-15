@@ -21,13 +21,16 @@ $ ->
 
     w: ->
       @context.canvas.width
+
+    text: (text, x, y) ->
+      @context.canvas.strokeText(text, x, y)
       
   class Colour
 
     constructor: ->
-     @r = randint 255
-     @g = randint 255
-     @b = randint 255
+      @r = randint 255
+      @g = randint 255
+      @b = randint 255
 
     to_rgb: ->
       "rgb(#{@r},#{@g},#{@b})"
@@ -50,12 +53,15 @@ $ ->
   class Turtle
 
     constructor: (@canvas, @image) ->
+      @health = 200
       @x = @canvas.w()/2.0
       @y = @canvas.h()/2.0
       @heading = Math.random() * 1000.0
       @colour = new Colour
       @distance_to_food = 1000.0
       @closer = false
+      @seek_turn = (randint(100) - 50) / 50.0
+      @speed = randint(500) / 100.0
 
     move: (distance) ->
       @x += Math.sin(@heading) * distance
@@ -70,20 +76,28 @@ $ ->
       @x -= @canvas.w() if @x > @canvas.w()
       @y += @canvas.h() if @y < 0
       @y -= @canvas.h() if @y > @canvas.h()
+      @canvas.text(@health, @x, @y)
 
     turn: (angle) ->
       @heading += angle
 
     tick: ->
-      @turn 0.6 if not @closer
+      @turn @seek_turn if not @closer
       @turn((randint(10) - 5) / 50.0)
-      @move 2.0 
+      @move @speed
+      @health = @health - 1
+
+    dead: -> 
+      @health < 1
 
     smell: (food) ->
       distance_now = Math.sqrt(((@x - food.x) * (@x - food.x)) + ((@y - food.y) * (@y - food.y))) 
       @closer = distance_now < @distance_to_food
       @distance_to_food = distance_now
-      food = new Food if @distance_to_food < 5
+      if @distance_to_food < 10
+        @health = @health + 1000
+        return true
+      false
 
   class Food
 
@@ -100,6 +114,20 @@ $ ->
       @x = Math.random() * 640
       @y = Math.random() * 480
       
+  move_turtles = (food) ->
+    dead_turtles = []
+    for turtle, i in turtles
+      if turtle.smell(food) 
+        food = new Food()
+      turtle.tick()
+      dead_turtles.push(i) if turtle.dead() 
+      dead_turtles.sort( (a, b) ->
+        b - a )
+    for index in dead_turtles
+      turtles.splice(index, 1)
+      turtles.push new Turtle canvas, img
+    return food
+
   randint = (ceil) ->
     Math.floor(Math.random()*ceil)
 
@@ -109,14 +137,11 @@ $ ->
   modded = (n, mod) ->
     (n + mod) % mod
 
-  start = ->
-    timer = setInterval(
-    ->
+  start = (food) ->
+    timer = setInterval( ->
       canvas.clear()
       food.draw(canvas)
-      turtle.smell(food) for turtle in turtles
-      turtle.tick() for turtle in turtles
-      if Math.random() < 0.01 then food.move()
+      food = move_turtles(food)
     , 50)
 
   stop = ->
@@ -124,19 +149,18 @@ $ ->
 
   img = new Image
   img.onload = ->
-    console.log 'image loaded'
 
   img.src = 'images/turtle.png'
   canvas = new Canvas 'turtles'
-  #canvas.fill_colour "rgb(0, 0, 0)"
-  #canvas.context.global_alpha = 0.5
   turtles = []
-  for num in [1..10] 
+  for num in [1..20] 
     turtles.push new Turtle canvas, img
   
-  food = new Food
+  make_food = -> 
+    new Food
 
   timer = null
-  start()
+
+  start make_food()
 
 
