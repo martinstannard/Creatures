@@ -76,9 +76,9 @@ $ ->
       @x += Math.sin(@heading) * distance
       @y += Math.cos(@heading) * distance
       @canvas.context.save()
-      @canvas.context.translate(@x+8, @y+8)
+      @canvas.context.translate(@x+16, @y+16)
       @canvas.context.rotate(-@heading)
-      @canvas.context.translate(-8, -8)
+      @canvas.context.translate(-16, -16)
       @canvas.context.drawImage(@image, 0, 0)
       @canvas.context.restore()
       @x += @canvas.w() if @x < 0
@@ -163,7 +163,7 @@ $ ->
   img = new Image
   img.onload = ->
 
-  img.src = 'images/turtle.png'
+  img.src = 'images/bug.png'
   canvas = new Canvas 'turtles'
   turtles = []
   for num in [1..20] 
