@@ -59,7 +59,8 @@ $ ->
 
   class Turtle
 
-    constructor: (@canvas, @image) ->
+    constructor: (@canvas) ->
+      @image = images[randint(2)]
       @health = 500
       @x = randint(@canvas.w())
       @y = randint(@canvas.h())
@@ -138,7 +139,7 @@ $ ->
         b - a )
     for index in dead_turtles
       turtles.splice(index, 1)
-      turtles.push new Turtle canvas, img
+      turtles.push new Turtle canvas
     return food
 
   randint = (ceil) ->
@@ -160,14 +161,16 @@ $ ->
   stop = ->
     clearInterval timer
 
-  img = new Image
-  img.onload = ->
+  images = []
+  for i in [0..1]
+    images[i] = new Image
+    images[i].onload = ->
+    images[i].src = "images/bug#{i}.png"
 
-  img.src = 'images/bug.png'
   canvas = new Canvas 'turtles'
   turtles = []
   for num in [1..20] 
-    turtles.push new Turtle canvas, img
+    turtles.push new Turtle canvas
   
   make_food = -> 
     new Food
