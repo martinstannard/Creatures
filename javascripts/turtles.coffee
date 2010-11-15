@@ -101,7 +101,7 @@ $ ->
       @health < 1
 
     smell: (food) ->
-      distance_now = Math.sqrt(((@x - food.x) * (@x - food.x)) + ((@y - food.y) * (@y - food.y))) 
+      distance_now = food.distance_from(@x, @y)
       @closer = distance_now < @distance_to_food
       @distance_to_food = distance_now
       if @distance_to_food < 10
@@ -123,6 +123,9 @@ $ ->
     move: ->
       @x = Math.random() * 640
       @y = Math.random() * 480
+
+    distance_from: (x, y) ->
+      distance_now = Math.sqrt(((@x - x) * (@x - x)) + ((@y - y) * (@y - y))) 
       
   move_turtles = (food) ->
     dead_turtles = []
