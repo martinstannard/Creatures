@@ -40,8 +40,8 @@ $ ->
       "#" + @num_to_hex(@r) + @num_to_hex(@g) + @num_to_hex(@b)
 
     health: (health) ->
-      @r = 255 - Math.min(health, 255)
-      @g = Math.min(health, 255)
+      @r = (512 - Math.min(health, 512)) / 2
+      @g = Math.min(health, 512) / 2
       @b = 0
       @to_rgb()
 
@@ -59,19 +59,20 @@ $ ->
 
   class Turtle
 
-    constructor: (@canvas) ->
+    constructor: (canvas, id) ->
+      @canvas = canvas
+      @id = id
       @image = images[randint(2)]
       @health = 500
-      @x = randint(@canvas.w())
-      @y = randint(@canvas.h())
+      @x = randint(canvas.w())
+      @y = randint(canvas.h())
       @heading = Math.random() * 1000.0
       @colour = new Colour
       @distance_to_food = 1000.0
       @closer = false
-      @seek_turn = (randint(100) - 50) / 50.0
-      @rand_turn = Math.random()
-      console.log @seek_turn
-      @speed = randint(500) / 100.0
+      @seek_turn = (randint(200) - 100) / 100.0
+      @rand_turn = Math.random() * 2
+      @speed = randint(40) / 10.0
 
     move: (distance) ->
       @x += Math.sin(@heading) * distance
@@ -88,6 +89,7 @@ $ ->
       @y -= @canvas.h() if @y > @canvas.h()
       c = new Colour
       @canvas.write(@health, @x, @y, c.health(@health))
+      @canvas.write(@id, @x+14, @y+18, '#ffff00')
 
     turn: (angle) ->
       @heading += angle
@@ -102,20 +104,21 @@ $ ->
       @health < 1
 
     smell: (food) ->
-      distance_now = food.distance_from(@x, @y)
+      distance_now = food.distance_from(@x + 16, @y + 16)
       @closer = distance_now < @distance_to_food
       @distance_to_food = distance_now
       if @distance_to_food < 10
-        @health = @health + 1000
+        @health = @health + food.health
         return true
       false
 
   class Food
 
     constructor: ->
+      @health = parseInt(Math.random() * 500 + 500)
       @colour = "rgb(0, 255, 0)"
-      @x = Math.random() * 640
-      @y = Math.random() * 480
+      @x = Math.random() * (canvas.w() - 50) + 25
+      @y = Math.random() * (canvas.h() - 50) + 25
 
     draw: (canvas) ->
       canvas.fill_colour @colour
@@ -128,19 +131,47 @@ $ ->
     distance_from: (x, y) ->
       distance_now = Math.sqrt(((@x - x) * (@x - x)) + ((@y - y) * (@y - y))) 
       
-  move_turtles = (food) ->
-    dead_turtles = []
-    for turtle, i in turtles
-      if turtle.smell(food) 
-        food = new Food()
-      turtle.tick()
-      dead_turtles.push(i) if turtle.dead() 
-      dead_turtles.sort( (a, b) ->
-        b - a )
-    for index in dead_turtles
-      turtles.splice(index, 1)
-      turtles.push new Turtle canvas
-    return food
+  class Reporter
+
+    health: (healths) ->
+      healths.sort( (a, b) ->
+        b[1] - a[1] )
+      for h, i in healths
+        c = new Colour
+        canvas.write(h[0], 570, i * 12 + 20, '#00ddff')
+        canvas.write(h[1], 580, i * 12 + 20, c.health(h[1]))
+      
+  class Population
+
+    constructor: (turtle_count, canvas) ->
+      @turtles = []
+      for num in [1..turtle_count] 
+        @turtles.push(new Turtle(canvas, num))
+  
+    tick: (food) ->
+      dead_turtles = []
+      for turtle, i in @turtles
+        if turtle.smell(food) 
+          food = new Food()
+        turtle.tick()
+        dead_turtles.push(i) 
+        @turtles[i] = new Turtle(canvas, i) if turtle.dead()
+      return food
+
+    healths: ->
+      healths = []
+      for turtle, i in @turtles
+        healths.push [i, turtle.health]
+      healths
+
+  make_food = -> 
+    new Food
+
+  make_images = (images) ->
+    for i in [0..1]
+      images[i] = new Image
+      images[i].onload = ->
+      images[i].src = "images/bug#{i}.png"
 
   randint = (ceil) ->
     Math.floor(Math.random()*ceil)
@@ -151,32 +182,24 @@ $ ->
   modded = (n, mod) ->
     (n + mod) % mod
 
+
+  timer = null
+  images = []
+  make_images(images)
+  canvas = new Canvas 'turtles'
+  reporter = new Reporter
+  population = new Population(10, canvas)
+
   start = (food) ->
     timer = setInterval( ->
       canvas.clear()
       food.draw(canvas)
-      food = move_turtles(food)
-    , 50)
+      food = population.tick(food)
+      reporter.health population.healths()
+    , 20)
 
   stop = ->
     clearInterval timer
-
-  images = []
-  for i in [0..1]
-    images[i] = new Image
-    images[i].onload = ->
-    images[i].src = "images/bug#{i}.png"
-
-  canvas = new Canvas 'turtles'
-  turtles = []
-  for num in [1..20] 
-    turtles.push new Turtle canvas
-  
-  make_food = -> 
-    new Food
-
-  timer = null
-
-  start make_food()
+  start new Food
 
 
