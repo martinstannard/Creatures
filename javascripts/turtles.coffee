@@ -60,6 +60,7 @@ $ ->
   class Turtle
 
     constructor: (canvas, id) ->
+      @age = 0
       @canvas = canvas
       @id = id
       @image = images[randint(2)]
@@ -70,7 +71,7 @@ $ ->
       @colour = new Colour
       @distance_to_food = 1000.0
       @closer = false
-      @seek_turn = (randint(200) - 100) / 100.0
+      @seek_turn = Math.random() * 3.14159
       @rand_turn = Math.random() * 2
       @speed = randint(40) / 10.0
 
@@ -95,6 +96,7 @@ $ ->
       @heading += angle
 
     tick: ->
+      @age += 1
       @turn @seek_turn if not @closer
       @turn (Math.random() * @rand_turn) - (@rand_turn / 2.0)
       @move @speed
@@ -115,7 +117,7 @@ $ ->
   class Food
 
     constructor: ->
-      @health = parseInt(Math.random() * 500 + 500)
+      @health = parseInt(Math.random() * 500) + 200
       @colour = "rgb(0, 255, 0)"
       @x = Math.random() * (canvas.w() - 50) + 25
       @y = Math.random() * (canvas.h() - 50) + 25
@@ -123,6 +125,9 @@ $ ->
     draw: (canvas) ->
       canvas.fill_colour @colour
       canvas.dot @x, @y, 4, 4 
+
+    tick: ->
+      @health += 3
 
     move: ->
       @x = Math.random() * 640
@@ -133,14 +138,19 @@ $ ->
       
   class Reporter
 
-    health: (healths) ->
-      healths.sort( (a, b) ->
-        b[1] - a[1] )
-      for h, i in healths
+    stats: (turtles) ->
+      canvas.write('#', 540, 12, '#00ddff')
+      canvas.write('Health', 560, 12, '#00ff00')
+      canvas.write('Age', 600, 12, '#ffff00')
+      turtles.sort( (a, b) ->
+        b[1].health - a[1].health )
+      for t, i in turtles
         c = new Colour
-        canvas.write(h[0], 570, i * 12 + 20, '#00ddff')
-        canvas.write(h[1], 580, i * 12 + 20, c.health(h[1]))
+        canvas.write(t[0], 540, i * 12 + 25, '#00ddff')
+        canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
+        canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
       
+      canvas.write(ticks, 540, 460, '#00ddff')
   class Population
 
     constructor: (turtle_count, canvas) ->
@@ -158,10 +168,10 @@ $ ->
         @turtles[i] = new Turtle(canvas, i) if turtle.dead()
       return food
 
-    healths: ->
+    stats: ->
       healths = []
       for turtle, i in @turtles
-        healths.push [i, turtle.health]
+        healths.push [i, turtle]
       healths
 
   make_food = -> 
@@ -182,7 +192,19 @@ $ ->
   modded = (n, mod) ->
     (n + mod) % mod
 
+  $('#faster').click( ->
+    ticks -= 5 if ticks > 5
+    stop()
+    start(food)
+  )
+  
+  $('#slower').click( ->
+    ticks += 5
+    stop()
+    start(food)
+  )
 
+  ticks = 25
   timer = null
   images = []
   make_images(images)
@@ -195,11 +217,14 @@ $ ->
       canvas.clear()
       food.draw(canvas)
       food = population.tick(food)
-      reporter.health population.healths()
-    , 20)
+      food.tick()
+      reporter.stats population.stats()
+    , ticks)
 
   stop = ->
     clearInterval timer
-  start new Food
+
+  food = new Food
+  start food
 
 

@@ -1,3 +1,3 @@
 *.swp
-javascripts/turtles.js
+javascripts/*.js
 .DS_Store
