@@ -63,7 +63,7 @@ $ ->
       @age = 0
       @canvas = canvas
       @id = id
-      @image = images[randint(2)]
+      @image = images[randint(8)]
       @health = 500
       @x = randint(canvas.w())
       @y = randint(canvas.h())
@@ -117,7 +117,7 @@ $ ->
   class Food
 
     constructor: ->
-      @health = parseInt(Math.random() * 500) + 200
+      @health = parseInt(400)
       @colour = "rgb(0, 255, 0)"
       @x = Math.random() * (canvas.w() - 50) + 25
       @y = Math.random() * (canvas.h() - 50) + 25
@@ -127,7 +127,7 @@ $ ->
       canvas.dot @x, @y, 4, 4 
 
     tick: ->
-      @health += 3
+      @health += 1
 
     move: ->
       @x = Math.random() * 640
@@ -178,7 +178,7 @@ $ ->
     new Food
 
   make_images = (images) ->
-    for i in [0..1]
+    for i in [0..7]
       images[i] = new Image
       images[i].onload = ->
       images[i].src = "images/bug#{i}.png"

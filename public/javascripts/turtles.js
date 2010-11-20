@@ -62,7 +62,7 @@
       this.age = 0;
       this.canvas = canvas;
       this.id = id;
-      this.image = images[randint(2)];
+      this.image = images[randint(8)];
       this.health = 500;
       this.x = randint(canvas.w());
       this.y = randint(canvas.h());
@@ -128,7 +128,7 @@
       return false;
     };
     Food = function() {
-      this.health = parseInt(Math.random() * 500) + 200;
+      this.health = parseInt(400);
       this.colour = "rgb(0, 255, 0)";
       this.x = Math.random() * (canvas.w() - 50) + 25;
       this.y = Math.random() * (canvas.h() - 50) + 25;
@@ -139,7 +139,7 @@
       return canvas.dot(this.x, this.y, 4, 4);
     };
     Food.prototype.tick = function() {
-      return this.health += 3;
+      return this.health += 1;
     };
     Food.prototype.move = function() {
       this.x = Math.random() * 640;
@@ -209,7 +209,7 @@
     make_images = function(images) {
       var _i, _result, i;
       _result = [];
-      for (_i = 0; _i <= 1; _i++) {
+      for (_i = 0; _i <= 7; _i++) {
         (function() {
           var i = _i;
           return _result.push((function() {
