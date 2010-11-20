@@ -40,8 +40,8 @@ $ ->
       "#" + @num_to_hex(@r) + @num_to_hex(@g) + @num_to_hex(@b)
 
     health: (health) ->
-      @r = (512 - Math.min(health, 512)) / 2
-      @g = Math.min(health, 512) / 2
+      @r = parseInt((512 - Math.min(health, 512)) / 2)
+      @g = parseInt(Math.min(health, 512) / 2)
       @b = 0
       @to_rgb()
 
@@ -150,7 +150,7 @@ $ ->
         canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
         canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
       
-      canvas.write(ticks, 540, 460, '#00ddff')
+      canvas.write("Time: " + ticks, 540, 460, '#00ddff')
   class Population
 
     constructor: (turtle_count, canvas) ->

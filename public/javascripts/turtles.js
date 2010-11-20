@@ -40,8 +40,8 @@
       return "#" + this.num_to_hex(this.r) + this.num_to_hex(this.g) + this.num_to_hex(this.b);
     };
     Colour.prototype.health = function(health) {
-      this.r = (512 - Math.min(health, 512)) / 2;
-      this.g = Math.min(health, 512) / 2;
+      this.r = parseInt((512 - Math.min(health, 512)) / 2);
+      this.g = parseInt(Math.min(health, 512) / 2);
       this.b = 0;
       return this.to_rgb();
     };
@@ -166,7 +166,7 @@
         canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health));
         canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00');
       }
-      return canvas.write(ticks, 540, 460, '#00ddff');
+      return canvas.write("Time: " + ticks, 540, 460, '#00ddff');
     };
     Population = function(turtle_count, canvas) {
       var num;
