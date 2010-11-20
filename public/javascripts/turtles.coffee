@@ -150,7 +150,7 @@ $ ->
         canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
         canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
       
-      canvas.write("Time: " + ticks, 540, 460, '#00ddff')
+      canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
   class Population
 
     constructor: (turtle_count, canvas) ->
@@ -192,27 +192,64 @@ $ ->
   modded = (n, mod) ->
     (n + mod) % mod
 
+  ticks = 0
+  timer = 0
+  images = []
+  canvas = null
+  food = null
+  reporter = null
+  population = null
+
   $('#faster').click( ->
-    ticks -= 5 if ticks > 5
-    stop()
-    start(food)
+    ticks = parseInt(ticks / 2) if ticks > 1.0
+    stop_timer()
+    start_timer()
   )
   
   $('#slower').click( ->
-    ticks += 5
-    stop()
-    start(food)
+    ticks *= 2
+    stop_timer()
+    start_timer()
   )
 
-  ticks = 25
-  timer = null
-  images = []
-  make_images(images)
-  canvas = new Canvas 'turtles'
-  reporter = new Reporter
-  population = new Population(10, canvas)
+  $('#restart').click( ->
+    set_initial_button_states()
+    stop_timer()
+    setup_world()
+    start_timer()
+  )
 
-  start = (food) ->
+  $('#pause').click( ->
+    stop_timer()
+    $('#pause').attr('disabled', 'disabled');
+    $('#slower').attr('disabled', 'disabled');
+    $('#faster').attr('disabled', 'disabled');
+    $('#resume').attr('disabled', '');
+  )
+
+  $('#resume').click( ->
+    start_timer()
+    set_initial_button_states()
+  )
+
+  set_initial_button_states = ->
+    $('#resume').attr('disabled', 'disabled');
+    $('#pause').attr('disabled', '');
+    $('#slower').attr('disabled', '');
+    $('#faster').attr('disabled', '');
+
+  
+  setup_world = ->
+    ticks = 32
+    timer = null
+    images = []
+    make_images(images)
+    canvas = new Canvas 'turtles'
+    reporter = new Reporter
+    population = new Population(10, canvas)
+    food = new Food
+
+  start_timer = ->
     timer = setInterval( ->
       canvas.clear()
       food.draw(canvas)
@@ -221,10 +258,11 @@ $ ->
       reporter.stats population.stats()
     , ticks)
 
-  stop = ->
+  stop_timer = ->
     clearInterval timer
-
-  food = new Food
-  start food
+  
+  setup_world()
+  set_initial_button_states()
+  start_timer()
 
 

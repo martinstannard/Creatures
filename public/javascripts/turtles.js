@@ -1,6 +1,6 @@
 (function() {
   $(function() {
-    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, make_food, make_images, modded, population, rand_colour, randint, reporter, start, stop, ticks, timer;
+    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, make_food, make_images, modded, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
     Canvas = function(id) {
       this.context = $("#" + id)[0].getContext('2d');
       return this;
@@ -166,7 +166,7 @@
         canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health));
         canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00');
       }
-      return canvas.write("Time: " + ticks, 540, 460, '#00ddff');
+      return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
     Population = function(turtle_count, canvas) {
       var num;
@@ -230,26 +230,59 @@
     modded = function(n, mod) {
       return (n + mod) % mod;
     };
+    ticks = 0;
+    timer = 0;
+    images = [];
+    canvas = null;
+    food = null;
+    reporter = null;
+    population = null;
     $('#faster').click(function() {
-      if (ticks > 5) {
-        ticks -= 5;
+      if (ticks > 1.0) {
+        ticks = parseInt(ticks / 2);
       }
-      stop();
-      return start(food);
+      stop_timer();
+      return start_timer();
     });
     $('#slower').click(function() {
-      ticks += 5;
-      stop();
-      return start(food);
+      ticks *= 2;
+      stop_timer();
+      return start_timer();
     });
-    ticks = 25;
-    timer = null;
-    images = [];
-    make_images(images);
-    canvas = new Canvas('turtles');
-    reporter = new Reporter();
-    population = new Population(10, canvas);
-    start = function(food) {
+    $('#restart').click(function() {
+      set_initial_button_states();
+      stop_timer();
+      setup_world();
+      return start_timer();
+    });
+    $('#pause').click(function() {
+      stop_timer();
+      $('#pause').attr('disabled', 'disabled');
+      $('#slower').attr('disabled', 'disabled');
+      $('#faster').attr('disabled', 'disabled');
+      return $('#resume').attr('disabled', '');
+    });
+    $('#resume').click(function() {
+      start_timer();
+      return set_initial_button_states();
+    });
+    set_initial_button_states = function() {
+      $('#resume').attr('disabled', 'disabled');
+      $('#pause').attr('disabled', '');
+      $('#slower').attr('disabled', '');
+      return $('#faster').attr('disabled', '');
+    };
+    setup_world = function() {
+      ticks = 32;
+      timer = null;
+      images = [];
+      make_images(images);
+      canvas = new Canvas('turtles');
+      reporter = new Reporter();
+      population = new Population(10, canvas);
+      return (food = new Food());
+    };
+    start_timer = function() {
       return (timer = setInterval(function() {
         canvas.clear();
         food.draw(canvas);
@@ -258,10 +291,11 @@
         return reporter.stats(population.stats());
       }, ticks));
     };
-    stop = function() {
+    stop_timer = function() {
       return clearInterval(timer);
     };
-    food = new Food();
-    return start(food);
+    setup_world();
+    set_initial_button_states();
+    return start_timer();
   });
 }).call(this);
