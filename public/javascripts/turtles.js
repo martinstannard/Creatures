@@ -1,6 +1,6 @@
 (function() {
   $(function() {
-    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, make_food, make_images, modded, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
+    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, is_numeric, make_food, make_images, modded, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
     Canvas = function(id) {
       this.context = $("#" + id)[0].getContext('2d');
       return this;
@@ -128,7 +128,13 @@
       return false;
     };
     Food = function() {
-      this.health = parseInt(400);
+      var health;
+      health = parseInt($('#food_start').val());
+      if (is_numeric(health)) {
+        this.health = health;
+      } else {
+        this.health = 300;
+      }
       this.colour = "rgb(0, 255, 0)";
       this.x = Math.random() * (canvas.w() - 50) + 25;
       this.y = Math.random() * (canvas.h() - 50) + 25;
@@ -139,7 +145,9 @@
       return canvas.dot(this.x, this.y, 4, 4);
     };
     Food.prototype.tick = function() {
-      return this.health += 1;
+      var inc;
+      inc = parseInt($('#food_inc').val());
+      return is_numeric(inc) ? this.health += inc : this.health += 1;
     };
     Food.prototype.move = function() {
       this.x = Math.random() * 640;
@@ -229,6 +237,9 @@
     };
     modded = function(n, mod) {
       return (n + mod) % mod;
+    };
+    is_numeric = function(n) {
+      return !isNaN(parseFloat(n)) && isFinite(n);
     };
     ticks = 0;
     timer = 0;

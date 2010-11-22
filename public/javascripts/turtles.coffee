@@ -117,7 +117,11 @@ $ ->
   class Food
 
     constructor: ->
-      @health = parseInt(400)
+      health = parseInt($('#food_start').val())
+      if is_numeric(health)
+        @health = health
+      else
+        @health = 300
       @colour = "rgb(0, 255, 0)"
       @x = Math.random() * (canvas.w() - 50) + 25
       @y = Math.random() * (canvas.h() - 50) + 25
@@ -127,7 +131,11 @@ $ ->
       canvas.dot @x, @y, 4, 4 
 
     tick: ->
-      @health += 1
+      inc = parseInt($('#food_inc').val())
+      if is_numeric(inc)
+        @health += inc
+      else
+        @health += 1
 
     move: ->
       @x = Math.random() * 640
@@ -192,6 +200,9 @@ $ ->
   modded = (n, mod) ->
     (n + mod) % mod
 
+  is_numeric = (n) ->
+    !isNaN(parseFloat(n)) && isFinite(n)
+
   ticks = 0
   timer = 0
   images = []
@@ -238,7 +249,6 @@ $ ->
     $('#slower').attr('disabled', '');
     $('#faster').attr('disabled', '');
 
-  
   setup_world = ->
     ticks = 32
     timer = null
