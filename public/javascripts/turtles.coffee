@@ -1,3 +1,4 @@
+
 $ ->
   class Canvas
 
@@ -64,7 +65,7 @@ $ ->
       @canvas = canvas
       @id = id
       @image = images[randint(8)]
-      @health = 500
+      @health = 500 
       @x = randint(canvas.w())
       @y = randint(canvas.h())
       @heading = Math.random() * 1000.0
@@ -154,11 +155,18 @@ $ ->
         b[1].health - a[1].health )
       for t, i in turtles
         c = new Colour
-        canvas.write(t[0], 540, i * 12 + 25, '#00ddff')
+        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff')
         canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
         canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
       
+      #console.log _(turtles).map( (t) -> t[1].age)
+      avg_health = _(turtles).reduce( 
+        (memo, num) -> 
+          memo + num[1].health
+        0
+      ) / turtles.length
       canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
+
   class Population
 
     constructor: (turtle_count, canvas) ->
@@ -167,13 +175,11 @@ $ ->
         @turtles.push(new Turtle(canvas, num))
   
     tick: (food) ->
-      dead_turtles = []
       for turtle, i in @turtles
         if turtle.smell(food) 
           food = new Food()
         turtle.tick()
-        dead_turtles.push(i) 
-        @turtles[i] = new Turtle(canvas, i) if turtle.dead()
+        @turtles[i] = new Turtle(canvas, turtle.id) if turtle.dead()
       return food
 
     stats: ->
