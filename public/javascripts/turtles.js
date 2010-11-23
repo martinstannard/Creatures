@@ -1,6 +1,6 @@
 (function() {
   $(function() {
-    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, is_numeric, make_food, make_images, modded, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
+    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
     Canvas = function(id) {
       this.context = $("#" + id)[0].getContext('2d');
       return this;
@@ -58,12 +58,57 @@
       n = Math.round(n);
       return "0123456789ABCDEF".charAt((n - n % 16) / 16) + "0123456789ABCDEF".charAt(n % 16);
     };
+    Food = function() {
+      this.health = parse_input('food_start', 300);
+      this.colour = "rgb(0, 255, 0)";
+      this.x = Math.random() * (canvas.w() - 50) + 25;
+      this.y = Math.random() * (canvas.h() - 50) + 25;
+      return this;
+    };
+    Food.prototype.draw = function(canvas) {
+      canvas.fill_colour(this.colour);
+      return canvas.dot(this.x, this.y, 4, 4);
+    };
+    Food.prototype.tick = function() {
+      return this.health += parse_input('food_inc', 1);
+    };
+    Food.prototype.move = function() {
+      this.x = Math.random() * 640;
+      return (this.y = Math.random() * 480);
+    };
+    Food.prototype.distance_from = function(x, y) {
+      var distance_now;
+      return (distance_now = Math.sqrt(((this.x - x) * (this.x - x)) + ((this.y - y) * (this.y - y))));
+    };
+    Reporter = function() {};
+    Reporter.prototype.stats = function(turtles) {
+      var _len, _ref, avg_health, c, i, t;
+      canvas.write('#', 540, 12, '#00ddff');
+      canvas.write('Health', 560, 12, '#00ff00');
+      canvas.write('Age', 600, 12, '#ffff00');
+      turtles.sort(function(a, b) {
+        return b[1].health - a[1].health;
+      });
+      _ref = turtles;
+      for (i = 0, _len = _ref.length; i < _len; i++) {
+        t = _ref[i];
+        c = new Colour();
+        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff');
+        canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health));
+        canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00');
+      }
+      avg_health = _(turtles).reduce(function(memo, num) {
+        return memo + num[1].health;
+      }, 0) / turtles.length;
+      canvas.write("Avg Health: " + avg_health, 540, 150, '#00ddff');
+      return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
+    };
     Turtle = function(canvas, id) {
       this.age = 0;
       this.canvas = canvas;
       this.id = id;
       this.image = images[randint(8)];
-      this.health = 500;
+      this.health = parse_input('health_start', 500);
       this.x = randint(canvas.w());
       this.y = randint(canvas.h());
       this.heading = Math.random() * 1000.0;
@@ -111,7 +156,7 @@
       }
       this.turn((Math.random() * this.rand_turn) - (this.rand_turn / 2.0));
       this.move(this.speed);
-      return (this.health = this.health - 1);
+      return this.health <= parse_input('health_ceiling', 2500) ? (this.health = this.health + parse_input('health_change', -1)) : (this.health = parse_input('health_ceiling', 2500));
     };
     Turtle.prototype.dead = function() {
       return this.health < 1;
@@ -126,58 +171,6 @@
         return true;
       }
       return false;
-    };
-    Food = function() {
-      var health;
-      health = parseInt($('#food_start').val());
-      if (is_numeric(health)) {
-        this.health = health;
-      } else {
-        this.health = 300;
-      }
-      this.colour = "rgb(0, 255, 0)";
-      this.x = Math.random() * (canvas.w() - 50) + 25;
-      this.y = Math.random() * (canvas.h() - 50) + 25;
-      return this;
-    };
-    Food.prototype.draw = function(canvas) {
-      canvas.fill_colour(this.colour);
-      return canvas.dot(this.x, this.y, 4, 4);
-    };
-    Food.prototype.tick = function() {
-      var inc;
-      inc = parseInt($('#food_inc').val());
-      return is_numeric(inc) ? this.health += inc : this.health += 1;
-    };
-    Food.prototype.move = function() {
-      this.x = Math.random() * 640;
-      return (this.y = Math.random() * 480);
-    };
-    Food.prototype.distance_from = function(x, y) {
-      var distance_now;
-      return (distance_now = Math.sqrt(((this.x - x) * (this.x - x)) + ((this.y - y) * (this.y - y))));
-    };
-    Reporter = function() {};
-    Reporter.prototype.stats = function(turtles) {
-      var _len, _ref, avg_health, c, i, t;
-      canvas.write('#', 540, 12, '#00ddff');
-      canvas.write('Health', 560, 12, '#00ff00');
-      canvas.write('Age', 600, 12, '#ffff00');
-      turtles.sort(function(a, b) {
-        return b[1].health - a[1].health;
-      });
-      _ref = turtles;
-      for (i = 0, _len = _ref.length; i < _len; i++) {
-        t = _ref[i];
-        c = new Colour();
-        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff');
-        canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health));
-        canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00');
-      }
-      avg_health = _(turtles).reduce(function(memo, num) {
-        return memo + num[1].health;
-      }, 0) / turtles.length;
-      return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
     Population = function(turtle_count, canvas) {
       var num;
@@ -211,6 +204,11 @@
         healths.push([i, turtle]);
       }
       return healths;
+    };
+    parse_input = function(id, otherwise) {
+      var value;
+      value = parseInt($('#' + id).val());
+      return is_numeric(value) ? value : otherwise;
     };
     make_food = function() {
       return new Food();
@@ -272,7 +270,8 @@
       $('#pause').attr('disabled', 'disabled');
       $('#slower').attr('disabled', 'disabled');
       $('#faster').attr('disabled', 'disabled');
-      return $('#resume').attr('disabled', '');
+      $('#resume').attr('disabled', '');
+      return console.log($('#pause').attr('disabled'));
     });
     $('#resume').click(function() {
       start_timer();

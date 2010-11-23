@@ -57,6 +57,50 @@ $ ->
       n = Math.round n
       "0123456789ABCDEF".charAt((n-n%16)/16) + "0123456789ABCDEF".charAt(n%16)
       
+  class Food
+
+    constructor: ->
+      @health = parse_input 'food_start', 300
+      @colour = "rgb(0, 255, 0)"
+      @x = Math.random() * (canvas.w() - 50) + 25
+      @y = Math.random() * (canvas.h() - 50) + 25
+
+    draw: (canvas) ->
+      canvas.fill_colour @colour
+      canvas.dot @x, @y, 4, 4 
+
+    tick: ->
+      @health += parse_input 'food_inc', 1
+
+    move: ->
+      @x = Math.random() * 640
+      @y = Math.random() * 480
+
+    distance_from: (x, y) ->
+      distance_now = Math.sqrt(((@x - x) * (@x - x)) + ((@y - y) * (@y - y))) 
+      
+  class Reporter
+
+    stats: (turtles) ->
+      canvas.write('#', 540, 12, '#00ddff')
+      canvas.write('Health', 560, 12, '#00ff00')
+      canvas.write('Age', 600, 12, '#ffff00')
+      turtles.sort( (a, b) ->
+        b[1].health - a[1].health )
+      for t, i in turtles
+        c = new Colour
+        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff')
+        canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
+        canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
+      
+      avg_health = _(turtles).reduce( 
+        (memo, num) -> 
+          memo + num[1].health
+        0
+      ) / turtles.length
+
+      canvas.write("Avg Health: " + avg_health, 540, 150, '#00ddff')
+      canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
 
   class Turtle
 
@@ -65,7 +109,7 @@ $ ->
       @canvas = canvas
       @id = id
       @image = images[randint(8)]
-      @health = 500 
+      @health = parse_input 'health_start', 500
       @x = randint(canvas.w())
       @y = randint(canvas.h())
       @heading = Math.random() * 1000.0
@@ -101,7 +145,10 @@ $ ->
       @turn @seek_turn if not @closer
       @turn (Math.random() * @rand_turn) - (@rand_turn / 2.0)
       @move @speed
-      @health = @health - 1
+      if @health <= parse_input('health_ceiling', 2500)
+        @health = @health + parse_input('health_change', -1)
+      else
+        @health = parse_input('health_ceiling', 2500)
 
     dead: -> 
       @health < 1
@@ -114,58 +161,6 @@ $ ->
         @health = @health + food.health
         return true
       false
-
-  class Food
-
-    constructor: ->
-      health = parseInt($('#food_start').val())
-      if is_numeric(health)
-        @health = health
-      else
-        @health = 300
-      @colour = "rgb(0, 255, 0)"
-      @x = Math.random() * (canvas.w() - 50) + 25
-      @y = Math.random() * (canvas.h() - 50) + 25
-
-    draw: (canvas) ->
-      canvas.fill_colour @colour
-      canvas.dot @x, @y, 4, 4 
-
-    tick: ->
-      inc = parseInt($('#food_inc').val())
-      if is_numeric(inc)
-        @health += inc
-      else
-        @health += 1
-
-    move: ->
-      @x = Math.random() * 640
-      @y = Math.random() * 480
-
-    distance_from: (x, y) ->
-      distance_now = Math.sqrt(((@x - x) * (@x - x)) + ((@y - y) * (@y - y))) 
-      
-  class Reporter
-
-    stats: (turtles) ->
-      canvas.write('#', 540, 12, '#00ddff')
-      canvas.write('Health', 560, 12, '#00ff00')
-      canvas.write('Age', 600, 12, '#ffff00')
-      turtles.sort( (a, b) ->
-        b[1].health - a[1].health )
-      for t, i in turtles
-        c = new Colour
-        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff')
-        canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
-        canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
-      
-      #console.log _(turtles).map( (t) -> t[1].age)
-      avg_health = _(turtles).reduce( 
-        (memo, num) -> 
-          memo + num[1].health
-        0
-      ) / turtles.length
-      canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
 
   class Population
 
@@ -187,6 +182,10 @@ $ ->
       for turtle, i in @turtles
         healths.push [i, turtle]
       healths
+
+  parse_input = (id, otherwise) ->
+    value = parseInt($('#' + id).val())
+    if is_numeric(value) then value else otherwise
 
   make_food = -> 
     new Food
