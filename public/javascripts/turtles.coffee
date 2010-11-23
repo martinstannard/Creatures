@@ -99,7 +99,7 @@ $ ->
         0
       ) / turtles.length
 
-      canvas.write("Avg Health: " + avg_health, 540, 150, '#00ddff')
+      canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff')
       canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
 
   class Turtle
@@ -110,6 +110,7 @@ $ ->
       @id = id
       @image = images[randint(8)]
       @health = parse_input 'health_start', 500
+      @speed = Math.random() * parse_input('speed', 5)
       @x = randint(canvas.w())
       @y = randint(canvas.h())
       @heading = Math.random() * 1000.0
@@ -118,7 +119,6 @@ $ ->
       @closer = false
       @seek_turn = Math.random() * 3.14159
       @rand_turn = Math.random() * 2
-      @speed = randint(40) / 10.0
 
     move: (distance) ->
       @x += Math.sin(@heading) * distance
@@ -261,7 +261,8 @@ $ ->
     make_images(images)
     canvas = new Canvas 'turtles'
     reporter = new Reporter
-    population = new Population(10, canvas)
+    creatures = parse_input('creatures', 10)
+    population = new Population(creatures, canvas)
     food = new Food
 
   start_timer = ->

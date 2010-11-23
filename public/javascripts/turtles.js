@@ -100,7 +100,7 @@
       avg_health = _(turtles).reduce(function(memo, num) {
         return memo + num[1].health;
       }, 0) / turtles.length;
-      canvas.write("Avg Health: " + avg_health, 540, 150, '#00ddff');
+      canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff');
       return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
     Turtle = function(canvas, id) {
@@ -109,6 +109,7 @@
       this.id = id;
       this.image = images[randint(8)];
       this.health = parse_input('health_start', 500);
+      this.speed = Math.random() * parse_input('speed', 5);
       this.x = randint(canvas.w());
       this.y = randint(canvas.h());
       this.heading = Math.random() * 1000.0;
@@ -117,7 +118,6 @@
       this.closer = false;
       this.seek_turn = Math.random() * 3.14159;
       this.rand_turn = Math.random() * 2;
-      this.speed = randint(40) / 10.0;
       return this;
     };
     Turtle.prototype.move = function(distance) {
@@ -283,13 +283,15 @@
       return $('#faster').attr('disabled', '');
     };
     setup_world = function() {
+      var creatures;
       ticks = 32;
       timer = null;
       images = [];
       make_images(images);
       canvas = new Canvas('turtles');
       reporter = new Reporter();
-      population = new Population(10, canvas);
+      creatures = parse_input('creatures', 10);
+      population = new Population(creatures, canvas);
       return (food = new Food());
     };
     start_timer = function() {
