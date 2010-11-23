@@ -270,8 +270,7 @@
       $('#pause').attr('disabled', 'disabled');
       $('#slower').attr('disabled', 'disabled');
       $('#faster').attr('disabled', 'disabled');
-      $('#resume').attr('disabled', '');
-      return console.log($('#pause').attr('disabled'));
+      return $('#resume').attr('disabled', '');
     });
     $('#resume').click(function() {
       start_timer();
