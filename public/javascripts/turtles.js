@@ -159,7 +159,7 @@
     };
     Reporter = function() {};
     Reporter.prototype.stats = function(turtles) {
-      var _len, _ref, c, i, t;
+      var _len, _ref, avg_health, c, i, t;
       canvas.write('#', 540, 12, '#00ddff');
       canvas.write('Health', 560, 12, '#00ff00');
       canvas.write('Age', 600, 12, '#ffff00');
@@ -170,10 +170,13 @@
       for (i = 0, _len = _ref.length; i < _len; i++) {
         t = _ref[i];
         c = new Colour();
-        canvas.write(t[0], 540, i * 12 + 25, '#00ddff');
+        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff');
         canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health));
         canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00');
       }
+      avg_health = _(turtles).reduce(function(memo, num) {
+        return memo + num[1].health;
+      }, 0) / turtles.length;
       return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
     Population = function(turtle_count, canvas) {
@@ -185,8 +188,7 @@
       return this;
     };
     Population.prototype.tick = function(food) {
-      var _len, _ref, dead_turtles, i, turtle;
-      dead_turtles = [];
+      var _len, _ref, i, turtle;
       _ref = this.turtles;
       for (i = 0, _len = _ref.length; i < _len; i++) {
         turtle = _ref[i];
@@ -194,9 +196,8 @@
           food = new Food();
         }
         turtle.tick();
-        dead_turtles.push(i);
         if (turtle.dead()) {
-          this.turtles[i] = new Turtle(canvas, i);
+          this.turtles[i] = new Turtle(canvas, turtle.id);
         }
       }
       return food;
