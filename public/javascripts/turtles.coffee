@@ -99,6 +99,13 @@ $ ->
         0
       ) / turtles.length
 
+      avg_age = _(turtles).reduce( 
+        (memo, num) -> 
+          memo + num[1].age
+        0
+      ) / turtles.length
+
+      canvas.write("Avg Age: " + avg_age, 540, 430, '#00ddff')
       canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff')
       canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
 

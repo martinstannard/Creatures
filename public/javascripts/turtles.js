@@ -82,7 +82,7 @@
     };
     Reporter = function() {};
     Reporter.prototype.stats = function(turtles) {
-      var _len, _ref, avg_health, c, i, t;
+      var _len, _ref, avg_age, avg_health, c, i, t;
       canvas.write('#', 540, 12, '#00ddff');
       canvas.write('Health', 560, 12, '#00ff00');
       canvas.write('Age', 600, 12, '#ffff00');
@@ -100,6 +100,10 @@
       avg_health = _(turtles).reduce(function(memo, num) {
         return memo + num[1].health;
       }, 0) / turtles.length;
+      avg_age = _(turtles).reduce(function(memo, num) {
+        return memo + num[1].age;
+      }, 0) / turtles.length;
+      canvas.write("Avg Age: " + avg_age, 540, 430, '#00ddff');
       canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff');
       return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
