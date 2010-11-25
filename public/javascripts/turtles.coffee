@@ -169,19 +169,71 @@ $ ->
         return true
       false
 
+  class Creature
+
+    constructor: (canvas, id) ->
+      @age = 0
+      @canvas = canvas
+      @id = id
+      @image = images[randint(8)]
+      @health = parse_input 'health_start', 500
+      @speed = Math.random() * parse_input('speed', 2)
+      @x = randint(canvas.w())
+      @y = randint(canvas.h())
+      @heading = 0
+      @colour = new Colour
+      @rand_turn = Math.random() * 2
+
+    move: (distance) ->
+      @x += Math.sin(@heading) * distance
+      @y += Math.cos(@heading) * distance
+      @canvas.context.save()
+      @canvas.context.translate(@x+16, @y+16)
+      @canvas.context.rotate(-@heading)
+      @canvas.context.translate(-16, -16)
+      @canvas.context.drawImage(@image, 0, 0)
+      @canvas.context.restore()
+      @x += @canvas.w() if @x < 0
+      @x -= @canvas.w() if @x > @canvas.w()
+      @y += @canvas.h() if @y < 0
+      @y -= @canvas.h() if @y > @canvas.h()
+      c = new Colour
+      @canvas.write(@health, @x, @y, c.health(@health))
+      @canvas.write(@id, @x+14, @y+18, '#ffff00')
+
+    turn_to: (food) ->
+      @heading = (@bearing(food) - (3.14159 / 2.0)) * -1.0
+
+    turn_by: (angle) ->
+      @heading += angle
+
+    tick: (food) ->
+      @age += 1
+      #@health = @health + parse_input('health_change', -1)
+      @turn_to food 
+      @turn_by @rand_turn 
+      @move @speed
+      if @health <= parse_input('health_ceiling', 2500)
+      else
+        @health = parse_input('health_ceiling', 2500)
+
+    dead: -> 
+      @health < 1
+
+    bearing: (food) ->
+      Math.atan2(food.y - @y, food.x - @x)
+
   class Population
 
     constructor: (turtle_count, canvas) ->
       @turtles = []
       for num in [1..turtle_count] 
-        @turtles.push(new Turtle(canvas, num))
+        @turtles.push(new Creature(canvas, num))
   
     tick: (food) ->
       for turtle, i in @turtles
-        if turtle.smell(food) 
-          food = new Food()
-        turtle.tick()
-        @turtles[i] = new Turtle(canvas, turtle.id) if turtle.dead()
+        turtle.tick(food)
+        @turtles[i] = new Creature(canvas, turtle.id) if turtle.dead()
       return food
 
     stats: ->

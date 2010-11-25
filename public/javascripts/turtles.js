@@ -1,6 +1,6 @@
 (function() {
   $(function() {
-    var Canvas, Colour, Food, Population, Reporter, Turtle, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
+    var Canvas, Colour, Creature, Food, Population, Reporter, Turtle, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
     Canvas = function(id) {
       this.context = $("#" + id)[0].getContext('2d');
       return this;
@@ -176,11 +176,74 @@
       }
       return false;
     };
+    Creature = function(canvas, id) {
+      this.age = 0;
+      this.canvas = canvas;
+      this.id = id;
+      this.image = images[randint(8)];
+      this.health = parse_input('health_start', 500);
+      this.speed = Math.random() * parse_input('speed', 2);
+      this.x = randint(canvas.w());
+      this.y = randint(canvas.h());
+      this.heading = 0;
+      this.colour = new Colour();
+      this.rand_turn = Math.random() * 2;
+      return this;
+    };
+    Creature.prototype.move = function(distance) {
+      var c;
+      this.x += Math.sin(this.heading) * distance;
+      this.y += Math.cos(this.heading) * distance;
+      this.canvas.context.save();
+      this.canvas.context.translate(this.x + 16, this.y + 16);
+      this.canvas.context.rotate(-this.heading);
+      this.canvas.context.translate(-16, -16);
+      this.canvas.context.drawImage(this.image, 0, 0);
+      this.canvas.context.restore();
+      if (this.x < 0) {
+        this.x += this.canvas.w();
+      }
+      if (this.x > this.canvas.w()) {
+        this.x -= this.canvas.w();
+      }
+      if (this.y < 0) {
+        this.y += this.canvas.h();
+      }
+      if (this.y > this.canvas.h()) {
+        this.y -= this.canvas.h();
+      }
+      c = new Colour();
+      this.canvas.write(this.health, this.x, this.y, c.health(this.health));
+      return this.canvas.write(this.id, this.x + 14, this.y + 18, '#ffff00');
+    };
+    Creature.prototype.turn_to = function(food) {
+      return (this.heading = (this.bearing(food) - (3.14159 / 2.0)) * -1.0);
+    };
+    Creature.prototype.turn_by = function(angle) {
+      return this.heading += angle;
+    };
+    Creature.prototype.tick = function(food) {
+      this.age += 1;
+      this.turn_to(food);
+      this.turn_by(this.rand_turn);
+      this.move(this.speed);
+      if (this.health <= parse_input('health_ceiling', 2500)) {
+
+      } else {
+        return (this.health = parse_input('health_ceiling', 2500));
+      }
+    };
+    Creature.prototype.dead = function() {
+      return this.health < 1;
+    };
+    Creature.prototype.bearing = function(food) {
+      return Math.atan2(food.y - this.y, food.x - this.x);
+    };
     Population = function(turtle_count, canvas) {
       var num;
       this.turtles = [];
       for (num = 1; (1 <= turtle_count ? num <= turtle_count : num >= turtle_count); (1 <= turtle_count ? num += 1 : num -= 1)) {
-        this.turtles.push(new Turtle(canvas, num));
+        this.turtles.push(new Creature(canvas, num));
       }
       return this;
     };
@@ -189,12 +252,9 @@
       _ref = this.turtles;
       for (i = 0, _len = _ref.length; i < _len; i++) {
         turtle = _ref[i];
-        if (turtle.smell(food)) {
-          food = new Food();
-        }
-        turtle.tick();
+        turtle.tick(food);
         if (turtle.dead()) {
-          this.turtles[i] = new Turtle(canvas, turtle.id);
+          this.turtles[i] = new Creature(canvas, turtle.id);
         }
       }
       return food;
