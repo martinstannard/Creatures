@@ -1,6 +1,6 @@
 (function() {
   $(function() {
-    var Canvas, Colour, Creature, Food, Population, Reporter, Turtle, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
+    var Canvas, Colour, Creature, Food, Population, Reporter, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, rand_range, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
     Canvas = function(id) {
       this.context = $("#" + id)[0].getContext('2d');
       return this;
@@ -61,13 +61,12 @@
     Food = function() {
       this.health = parse_input('food_start', 300);
       this.colour = "rgb(0, 255, 0)";
-      this.x = Math.random() * (canvas.w() - 50) + 25;
-      this.y = Math.random() * (canvas.h() - 50) + 25;
+      this.x = Math.random() * (canvas.w() - 80) + 40;
+      this.y = Math.random() * (canvas.h() - 80) + 40;
       return this;
     };
     Food.prototype.draw = function(canvas) {
-      canvas.fill_colour(this.colour);
-      return canvas.dot(this.x, this.y, 4, 4);
+      return canvas.context.drawImage(images[2], this.x - 10, this.y - 7.5);
     };
     Food.prototype.tick = function() {
       return this.health += parse_input('food_inc', 1);
@@ -107,80 +106,12 @@
       canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff');
       return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
-    Turtle = function(canvas, id) {
-      this.age = 0;
-      this.canvas = canvas;
-      this.id = id;
-      this.image = images[randint(8)];
-      this.health = parse_input('health_start', 500);
-      this.speed = Math.random() * parse_input('speed', 5);
-      this.x = randint(canvas.w());
-      this.y = randint(canvas.h());
-      this.heading = Math.random() * 1000.0;
-      this.colour = new Colour();
-      this.distance_to_food = 1000.0;
-      this.closer = false;
-      this.seek_turn = Math.random() * 3.14159;
-      this.rand_turn = Math.random() * 2;
-      return this;
-    };
-    Turtle.prototype.move = function(distance) {
-      var c;
-      this.x += Math.sin(this.heading) * distance;
-      this.y += Math.cos(this.heading) * distance;
-      this.canvas.context.save();
-      this.canvas.context.translate(this.x + 16, this.y + 16);
-      this.canvas.context.rotate(-this.heading);
-      this.canvas.context.translate(-16, -16);
-      this.canvas.context.drawImage(this.image, 0, 0);
-      this.canvas.context.restore();
-      if (this.x < 0) {
-        this.x += this.canvas.w();
-      }
-      if (this.x > this.canvas.w()) {
-        this.x -= this.canvas.w();
-      }
-      if (this.y < 0) {
-        this.y += this.canvas.h();
-      }
-      if (this.y > this.canvas.h()) {
-        this.y -= this.canvas.h();
-      }
-      c = new Colour();
-      this.canvas.write(this.health, this.x, this.y, c.health(this.health));
-      return this.canvas.write(this.id, this.x + 14, this.y + 18, '#ffff00');
-    };
-    Turtle.prototype.turn = function(angle) {
-      return this.heading += angle;
-    };
-    Turtle.prototype.tick = function() {
-      this.age += 1;
-      if (!this.closer) {
-        this.turn(this.seek_turn);
-      }
-      this.turn((Math.random() * this.rand_turn) - (this.rand_turn / 2.0));
-      this.move(this.speed);
-      return this.health <= parse_input('health_ceiling', 2500) ? (this.health = this.health + parse_input('health_change', -1)) : (this.health = parse_input('health_ceiling', 2500));
-    };
-    Turtle.prototype.dead = function() {
-      return this.health < 1;
-    };
-    Turtle.prototype.smell = function(food) {
-      var distance_now;
-      distance_now = food.distance_from(this.x + 16, this.y + 16);
-      this.closer = distance_now < this.distance_to_food;
-      this.distance_to_food = distance_now;
-      if (this.distance_to_food < 10) {
-        this.health = this.health + food.health;
-        return true;
-      }
-      return false;
-    };
     Creature = function(canvas, id) {
+      this.centre = 16;
       this.age = 0;
       this.canvas = canvas;
       this.id = id;
-      this.image = images[randint(8)];
+      this.image = images[0];
       this.health = parse_input('health_start', 500);
       this.speed = Math.random() * parse_input('speed', 2);
       this.x = randint(canvas.w());
@@ -195,9 +126,9 @@
       this.x += Math.sin(this.heading) * distance;
       this.y += Math.cos(this.heading) * distance;
       this.canvas.context.save();
-      this.canvas.context.translate(this.x + 16, this.y + 16);
+      this.canvas.context.translate(this.x + this.centre, this.y + this.centre);
       this.canvas.context.rotate(-this.heading);
-      this.canvas.context.translate(-16, -16);
+      this.canvas.context.translate(-this.centre, -this.centre);
       this.canvas.context.drawImage(this.image, 0, 0);
       this.canvas.context.restore();
       if (this.x < 0) {
@@ -217,27 +148,74 @@
       return this.canvas.write(this.id, this.x + 14, this.y + 18, '#ffff00');
     };
     Creature.prototype.turn_to = function(food) {
-      return (this.heading = (this.bearing(food) - (3.14159 / 2.0)) * -1.0);
+      return (this.heading = this.bearing(food));
     };
     Creature.prototype.turn_by = function(angle) {
-      return this.heading += angle;
+      this.heading += angle;
+      if (this.heading < -3.14159) {
+        this.heading += 2 * 3.14159;
+      }
+      return this.heading > 3.14159 ? this.heading -= 2 * 3.14159 : null;
     };
     Creature.prototype.tick = function(food) {
-      this.age += 1;
-      this.turn_to(food);
-      this.turn_by(this.rand_turn);
-      this.move(this.speed);
-      if (this.health <= parse_input('health_ceiling', 2500)) {
+      if (this.can_see_food(food)) {
 
       } else {
-        return (this.health = parse_input('health_ceiling', 2500));
+        this.turn_by(rand_range(1.0));
       }
+      this.move(this.speed);
+      if (this.health <= parse_input('health_ceiling', 2500)) {
+        this.health = this.health + parse_input('health_change', -1);
+      } else {
+        this.health = parse_input('health_ceiling', 2500);
+      }
+      return this.age += 1;
+    };
+    Creature.prototype.action = function(food) {};
+    Creature.prototype.eats = function(food) {
+      if (this.can_eat_food(food)) {
+        this.health += food.health;
+        return true;
+      }
+      return false;
     };
     Creature.prototype.dead = function() {
       return this.health < 1;
     };
     Creature.prototype.bearing = function(food) {
-      return Math.atan2(food.y - this.y, food.x - this.x);
+      return Math.atan2(food.x - this.centre_x(), food.y - this.centre_y());
+    };
+    Creature.prototype.centre_x = function() {
+      return this.x + this.centre;
+    };
+    Creature.prototype.centre_y = function() {
+      return this.y + this.centre;
+    };
+    Creature.prototype.distance_to_food = function(food) {
+      var a, b;
+      a = this.centre_x() - food.x;
+      b = this.centre_y() - food.y;
+      return a * a + b * b;
+    };
+    Creature.prototype.can_eat_food = function(food) {
+      return this.distance_to_food(food) < 49;
+    };
+    Creature.prototype.can_see_food = function(food) {
+      var bearing;
+      bearing = this.bearing(food);
+      if (bearing < this.normalized_angle(this.heading + 0.5) && bearing > this.normalized_angle(this.heading - 0.5)) {
+        return true;
+      }
+      return false;
+    };
+    Creature.prototype.normalized_angle = function(angle) {
+      if (angle < -3.14159) {
+        angle += 2 * 3.14159;
+      }
+      if (angle > 3.14159) {
+        angle -= 2 * 3.14159;
+      }
+      return angle;
     };
     Population = function(turtle_count, canvas) {
       var num;
@@ -252,6 +230,9 @@
       _ref = this.turtles;
       for (i = 0, _len = _ref.length; i < _len; i++) {
         turtle = _ref[i];
+        if (turtle.eats(food)) {
+          food = new Food();
+        }
         turtle.tick(food);
         if (turtle.dead()) {
           this.turtles[i] = new Creature(canvas, turtle.id);
@@ -278,22 +259,21 @@
       return new Food();
     };
     make_images = function(images) {
-      var _i, _result, i;
-      _result = [];
-      for (_i = 0; _i <= 7; _i++) {
-        (function() {
-          var i = _i;
-          return _result.push((function() {
-            images[i] = new Image();
-            images[i].onload = function() {};
-            return (images[i].src = ("images/bug" + (i) + ".png"));
-          })());
-        })();
-      }
-      return _result;
+      images[0] = new Image();
+      images[0].onload = function() {};
+      images[0].src = "images/predator.png";
+      images[1] = new Image();
+      images[1].onload = function() {};
+      images[1].src = "images/rock2.jpg";
+      images[2] = new Image();
+      images[2].onload = function() {};
+      return (images[2].src = "images/banana.png");
     };
     randint = function(ceil) {
       return Math.floor(Math.random() * ceil);
+    };
+    rand_range = function(top) {
+      return (Math.random() * top) - (top / 2.0);
     };
     rand_colour = function() {
       return "rgb(" + (randint(255)) + "," + (randint(255)) + "," + (randint(255)) + ")";
@@ -361,6 +341,7 @@
     start_timer = function() {
       return (timer = setInterval(function() {
         canvas.clear();
+        canvas.context.drawImage(images[1], 0, 0);
         food.draw(canvas);
         food = population.tick(food);
         food.tick();

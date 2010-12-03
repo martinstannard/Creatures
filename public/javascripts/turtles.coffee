@@ -62,12 +62,11 @@ $ ->
     constructor: ->
       @health = parse_input 'food_start', 300
       @colour = "rgb(0, 255, 0)"
-      @x = Math.random() * (canvas.w() - 50) + 25
-      @y = Math.random() * (canvas.h() - 50) + 25
+      @x = Math.random() * (canvas.w() - 80) + 40
+      @y = Math.random() * (canvas.h() - 80) + 40
 
     draw: (canvas) ->
-      canvas.fill_colour @colour
-      canvas.dot @x, @y, 4, 4 
+      canvas.context.drawImage(images[2], @x - 10, @y - 7.5)
 
     tick: ->
       @health += parse_input 'food_inc', 1
@@ -109,73 +108,14 @@ $ ->
       canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff')
       canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
 
-  class Turtle
-
-    constructor: (canvas, id) ->
-      @age = 0
-      @canvas = canvas
-      @id = id
-      @image = images[randint(8)]
-      @health = parse_input 'health_start', 500
-      @speed = Math.random() * parse_input('speed', 5)
-      @x = randint(canvas.w())
-      @y = randint(canvas.h())
-      @heading = Math.random() * 1000.0
-      @colour = new Colour
-      @distance_to_food = 1000.0
-      @closer = false
-      @seek_turn = Math.random() * 3.14159
-      @rand_turn = Math.random() * 2
-
-    move: (distance) ->
-      @x += Math.sin(@heading) * distance
-      @y += Math.cos(@heading) * distance
-      @canvas.context.save()
-      @canvas.context.translate(@x+16, @y+16)
-      @canvas.context.rotate(-@heading)
-      @canvas.context.translate(-16, -16)
-      @canvas.context.drawImage(@image, 0, 0)
-      @canvas.context.restore()
-      @x += @canvas.w() if @x < 0
-      @x -= @canvas.w() if @x > @canvas.w()
-      @y += @canvas.h() if @y < 0
-      @y -= @canvas.h() if @y > @canvas.h()
-      c = new Colour
-      @canvas.write(@health, @x, @y, c.health(@health))
-      @canvas.write(@id, @x+14, @y+18, '#ffff00')
-
-    turn: (angle) ->
-      @heading += angle
-
-    tick: ->
-      @age += 1
-      @turn @seek_turn if not @closer
-      @turn (Math.random() * @rand_turn) - (@rand_turn / 2.0)
-      @move @speed
-      if @health <= parse_input('health_ceiling', 2500)
-        @health = @health + parse_input('health_change', -1)
-      else
-        @health = parse_input('health_ceiling', 2500)
-
-    dead: -> 
-      @health < 1
-
-    smell: (food) ->
-      distance_now = food.distance_from(@x + 16, @y + 16)
-      @closer = distance_now < @distance_to_food
-      @distance_to_food = distance_now
-      if @distance_to_food < 10
-        @health = @health + food.health
-        return true
-      false
-
   class Creature
 
     constructor: (canvas, id) ->
+      @centre = 16
       @age = 0
       @canvas = canvas
       @id = id
-      @image = images[randint(8)]
+      @image = images[0]
       @health = parse_input 'health_start', 500
       @speed = Math.random() * parse_input('speed', 2)
       @x = randint(canvas.w())
@@ -188,9 +128,9 @@ $ ->
       @x += Math.sin(@heading) * distance
       @y += Math.cos(@heading) * distance
       @canvas.context.save()
-      @canvas.context.translate(@x+16, @y+16)
+      @canvas.context.translate(@x+@centre, @y+@centre)
       @canvas.context.rotate(-@heading)
-      @canvas.context.translate(-16, -16)
+      @canvas.context.translate(-@centre, -@centre)
       @canvas.context.drawImage(@image, 0, 0)
       @canvas.context.restore()
       @x += @canvas.w() if @x < 0
@@ -202,27 +142,68 @@ $ ->
       @canvas.write(@id, @x+14, @y+18, '#ffff00')
 
     turn_to: (food) ->
-      @heading = (@bearing(food) - (3.14159 / 2.0)) * -1.0
+      @heading = @bearing food
 
     turn_by: (angle) ->
       @heading += angle
+      if @heading < -3.14159
+        @heading += 2 * 3.14159
+      if @heading > 3.14159
+        @heading -= 2 * 3.14159
 
     tick: (food) ->
-      @age += 1
-      #@health = @health + parse_input('health_change', -1)
-      @turn_to food 
-      @turn_by @rand_turn 
+      if @can_see_food(food)
+        #@turn_by 0.01 
+      else
+        @turn_by rand_range(1.0) 
       @move @speed
       if @health <= parse_input('health_ceiling', 2500)
+        @health = @health + parse_input('health_change', -1)
       else
         @health = parse_input('health_ceiling', 2500)
+      @age += 1
+
+    action: (food) ->
+      
+    eats: (food) ->
+      if @can_eat_food(food)
+        @health += food.health
+        return true
+      false
 
     dead: -> 
       @health < 1
 
     bearing: (food) ->
-      Math.atan2(food.y - @y, food.x - @x)
+      Math.atan2(food.x - @centre_x(), food.y - @centre_y())
 
+    centre_x: ->
+      @x + @centre
+
+    centre_y: ->
+      @y + @centre
+
+    distance_to_food: (food) ->
+      a = @centre_x() - food.x
+      b = @centre_y() - food.y
+      a * a + b * b
+
+    can_eat_food: (food) ->
+      @distance_to_food(food) < 49
+
+    can_see_food: (food) ->
+      bearing = @bearing food
+      if bearing < @normalized_angle(@heading + 0.5) && bearing > @normalized_angle(@heading - 0.5)
+        return true
+      false
+
+    normalized_angle: (angle) -> 
+      if angle < -3.14159
+        angle += 2 * 3.14159
+      if angle > 3.14159
+        angle -= 2 * 3.14159
+      angle
+      
   class Population
 
     constructor: (turtle_count, canvas) ->
@@ -232,6 +213,8 @@ $ ->
   
     tick: (food) ->
       for turtle, i in @turtles
+        if turtle.eats(food) 
+          food = new Food()
         turtle.tick(food)
         @turtles[i] = new Creature(canvas, turtle.id) if turtle.dead()
       return food
@@ -250,13 +233,21 @@ $ ->
     new Food
 
   make_images = (images) ->
-    for i in [0..7]
-      images[i] = new Image
-      images[i].onload = ->
-      images[i].src = "images/bug#{i}.png"
+    images[0] = new Image
+    images[0].onload = ->
+    images[0].src = "images/predator.png"
+    images[1] = new Image
+    images[1].onload = ->
+    images[1].src = "images/rock2.jpg"
+    images[2] = new Image
+    images[2].onload = ->
+    images[2].src = "images/banana.png"
 
   randint = (ceil) ->
     Math.floor(Math.random()*ceil)
+
+  rand_range = (top) ->
+    (Math.random()*top) - (top / 2.0)
 
   rand_colour = ->
     "rgb(#{randint(255)},#{randint(255)},#{randint(255)})"
@@ -327,6 +318,7 @@ $ ->
   start_timer = ->
     timer = setInterval( ->
       canvas.clear()
+      canvas.context.drawImage(images[1], 0, 0)
       food.draw(canvas)
       food = population.tick(food)
       food.tick()
