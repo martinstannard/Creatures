@@ -123,6 +123,8 @@ $ ->
       @heading = 0
       @colour = new Colour
       @rand_turn = Math.random() * 2
+      @eye_width = 0.3
+      @eye_offset = 0.1
 
     move: (distance) ->
       @x += Math.sin(@heading) * distance
@@ -152,10 +154,7 @@ $ ->
         @heading -= 2 * 3.14159
 
     tick: (food) ->
-      if @can_see_food(food)
-        #@turn_by 0.01 
-      else
-        @turn_by rand_range(1.0) 
+      @action(food)
       @move @speed
       if @health <= parse_input('health_ceiling', 2500)
         @health = @health + parse_input('health_change', -1)
@@ -164,6 +163,18 @@ $ ->
       @age += 1
 
     action: (food) ->
+      left = @can_see_left(food)
+      right = @can_see_left(food)
+      if left && right
+        return
+      if left
+        @turn_by 0.01 
+        return
+      if right
+        @turn_by -0.01 
+        return
+      else
+        @turn_by rand_range(1.0) 
       
     eats: (food) ->
       if @can_eat_food(food)
@@ -191,11 +202,18 @@ $ ->
     can_eat_food: (food) ->
       @distance_to_food(food) < 49
 
-    can_see_food: (food) ->
+    can_see_food: (food, offset, width) ->
       bearing = @bearing food
-      if bearing < @normalized_angle(@heading + 0.5) && bearing > @normalized_angle(@heading - 0.5)
+      centre = @heading + @eye_offset
+      if bearing < @normalized_angle(@heading + @eye_width) && bearing > @normalized_angle(@heading - @eye_width)
         return true
       false
+
+    can_see_left: (food) ->
+      @can_see_food(food, @eye_offset, @eye_width)
+
+    can_see_right: (food) ->
+      @can_see_food(food, -@eye_offset, @eye_width)
 
     normalized_angle: (angle) -> 
       if angle < -3.14159

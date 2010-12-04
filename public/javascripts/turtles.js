@@ -119,6 +119,8 @@
       this.heading = 0;
       this.colour = new Colour();
       this.rand_turn = Math.random() * 2;
+      this.eye_width = 0.3;
+      this.eye_offset = 0.1;
       return this;
     };
     Creature.prototype.move = function(distance) {
@@ -158,11 +160,7 @@
       return this.heading > 3.14159 ? this.heading -= 2 * 3.14159 : null;
     };
     Creature.prototype.tick = function(food) {
-      if (this.can_see_food(food)) {
-
-      } else {
-        this.turn_by(rand_range(1.0));
-      }
+      this.action(food);
       this.move(this.speed);
       if (this.health <= parse_input('health_ceiling', 2500)) {
         this.health = this.health + parse_input('health_change', -1);
@@ -171,7 +169,24 @@
       }
       return this.age += 1;
     };
-    Creature.prototype.action = function(food) {};
+    Creature.prototype.action = function(food) {
+      var left, right;
+      left = this.can_see_left(food);
+      right = this.can_see_left(food);
+      if (left && right) {
+        return null;
+      }
+      if (left) {
+        this.turn_by(0.01);
+        return null;
+      }
+      if (right) {
+        this.turn_by - 0.01;
+        return null;
+      } else {
+        return this.turn_by(rand_range(1.0));
+      }
+    };
     Creature.prototype.eats = function(food) {
       if (this.can_eat_food(food)) {
         this.health += food.health;
@@ -200,13 +215,20 @@
     Creature.prototype.can_eat_food = function(food) {
       return this.distance_to_food(food) < 49;
     };
-    Creature.prototype.can_see_food = function(food) {
-      var bearing;
+    Creature.prototype.can_see_food = function(food, offset, width) {
+      var bearing, centre;
       bearing = this.bearing(food);
-      if (bearing < this.normalized_angle(this.heading + 0.5) && bearing > this.normalized_angle(this.heading - 0.5)) {
+      centre = this.heading + this.eye_offset;
+      if (bearing < this.normalized_angle(this.heading + this.eye_width) && bearing > this.normalized_angle(this.heading - this.eye_width)) {
         return true;
       }
       return false;
+    };
+    Creature.prototype.can_see_left = function(food) {
+      return this.can_see_food(food, this.eye_offset, this.eye_width);
+    };
+    Creature.prototype.can_see_right = function(food) {
+      return this.can_see_food(food, -this.eye_offset, this.eye_width);
     };
     Creature.prototype.normalized_angle = function(angle) {
       if (angle < -3.14159) {
