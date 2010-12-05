@@ -1,6 +1,14 @@
 (function() {
+  var __extends = function(child, parent) {
+    var ctor = function(){};
+    ctor.prototype = parent.prototype;
+    child.prototype = new ctor();
+    child.prototype.constructor = child;
+    if (typeof parent.extended === "function") parent.extended(child);
+    child.__super__ = parent.prototype;
+  };
   $(function() {
-    var Canvas, Colour, Creature, Food, Population, Reporter, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, rand_range, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
+    var Canvas, Colour, Creature, Food, Population, Predator, Reporter, canvas, food, images, is_numeric, make_food, make_images, modded, parse_input, population, rand_colour, rand_range, randint, reporter, set_initial_button_states, setup_world, start_timer, stop_timer, ticks, timer;
     Canvas = function(id) {
       this.context = $("#" + id)[0].getContext('2d');
       return this;
@@ -131,19 +139,46 @@
       this.age = 0;
       this.canvas = canvas;
       this.id = id;
-      this.image = images[0];
       this.health = parse_input('health_start', 500);
       this.speed = Math.random() * parse_input('speed', 2);
       this.x = randint(canvas.w());
       this.y = randint(canvas.h());
       this.heading = 0;
-      this.colour = new Colour();
       this.rand_turn = Math.random() * 2;
+      return this;
+    };
+    Predator = function(canvas, id) {
+      Predator.__super__.constructor.apply(this, arguments);
+      this.image = images[0];
       this.eye_width = Math.random() * 2;
       this.eye_offset = Math.random();
       return this;
     };
-    Creature.prototype.move = function(distance) {
+    __extends(Predator, Creature);
+    Predator.prototype.tick = function(food) {
+      this.action(food);
+      this.move(this.speed);
+      return this.health_check();
+    };
+    Predator.prototype.action = function(food) {
+      var left, right;
+      left = this.can_see_left(food);
+      right = this.can_see_left(food);
+      if (left && right) {
+        return null;
+      }
+      if (left) {
+        this.turn_by(0.01);
+        return null;
+      }
+      if (right) {
+        this.turn_by - 0.01;
+        return null;
+      } else {
+        return this.turn_by(rand_range(this.rand_turn));
+      }
+    };
+    Predator.prototype.move = function(distance) {
       var c;
       this.x += Math.sin(this.heading) * distance;
       this.y += Math.cos(this.heading) * distance;
@@ -169,19 +204,7 @@
       this.canvas.write(this.health, this.x, this.y, c.health(this.health));
       return this.canvas.write(this.id, this.x + 14, this.y + 18, '#ffff00');
     };
-    Creature.prototype.turn_to = function(food) {
-      return (this.heading = this.bearing(food));
-    };
-    Creature.prototype.turn_by = function(angle) {
-      this.heading += angle;
-      if (this.heading < -3.14159) {
-        this.heading += 2 * 3.14159;
-      }
-      return this.heading > 3.14159 ? this.heading -= 2 * 3.14159 : null;
-    };
-    Creature.prototype.tick = function(food) {
-      this.action(food);
-      this.move(this.speed);
+    Predator.prototype.health_check = function() {
       if (this.health <= parse_input('health_ceiling', 2500)) {
         this.health = this.health + parse_input('health_change', -1);
       } else {
@@ -189,53 +212,42 @@
       }
       return this.age += 1;
     };
-    Creature.prototype.action = function(food) {
-      var left, right;
-      left = this.can_see_left(food);
-      right = this.can_see_left(food);
-      if (left && right) {
-        return null;
+    Predator.prototype.turn_by = function(angle) {
+      this.heading += angle;
+      if (this.heading < -3.14159) {
+        this.heading += 2 * 3.14159;
       }
-      if (left) {
-        this.turn_by(0.01);
-        return null;
-      }
-      if (right) {
-        this.turn_by - 0.01;
-        return null;
-      } else {
-        return this.turn_by(rand_range(this.rand_turn));
-      }
+      return this.heading > 3.14159 ? this.heading -= 2 * 3.14159 : null;
     };
-    Creature.prototype.eats = function(food) {
+    Predator.prototype.eats = function(food) {
       if (this.can_eat_food(food)) {
         this.health += food.health;
         return true;
       }
       return false;
     };
-    Creature.prototype.dead = function() {
+    Predator.prototype.dead = function() {
       return this.health < 1;
     };
-    Creature.prototype.bearing = function(food) {
+    Predator.prototype.bearing = function(food) {
       return Math.atan2(food.x - this.centre_x(), food.y - this.centre_y());
     };
-    Creature.prototype.centre_x = function() {
+    Predator.prototype.centre_x = function() {
       return this.x + this.centre;
     };
-    Creature.prototype.centre_y = function() {
+    Predator.prototype.centre_y = function() {
       return this.y + this.centre;
     };
-    Creature.prototype.distance_to_food = function(food) {
+    Predator.prototype.distance_to_food = function(food) {
       var a, b;
       a = this.centre_x() - food.x;
       b = this.centre_y() - food.y;
       return a * a + b * b;
     };
-    Creature.prototype.can_eat_food = function(food) {
+    Predator.prototype.can_eat_food = function(food) {
       return this.distance_to_food(food) < 49;
     };
-    Creature.prototype.can_see_food = function(food, offset, width) {
+    Predator.prototype.can_see_food = function(food, offset, width) {
       var bearing, centre;
       bearing = this.bearing(food);
       centre = this.heading + this.eye_offset;
@@ -244,13 +256,13 @@
       }
       return false;
     };
-    Creature.prototype.can_see_left = function(food) {
+    Predator.prototype.can_see_left = function(food) {
       return this.can_see_food(food, this.eye_offset, this.eye_width);
     };
-    Creature.prototype.can_see_right = function(food) {
+    Predator.prototype.can_see_right = function(food) {
       return this.can_see_food(food, -this.eye_offset, this.eye_width);
     };
-    Creature.prototype.normalized_angle = function(angle) {
+    Predator.prototype.normalized_angle = function(angle) {
       if (angle < -3.14159) {
         angle += 2 * 3.14159;
       }
@@ -263,7 +275,7 @@
       var num;
       this.turtles = [];
       for (num = 1; (1 <= turtle_count ? num <= turtle_count : num >= turtle_count); (1 <= turtle_count ? num += 1 : num -= 1)) {
-        this.turtles.push(new Creature(canvas, num));
+        this.turtles.push(new Predator(canvas, num));
       }
       return this;
     };
@@ -277,7 +289,7 @@
         }
         turtle.tick(food);
         if (turtle.dead()) {
-          this.turtles[i] = new Creature(canvas, turtle.id);
+          this.turtles[i] = new Predator(canvas, turtle.id);
         }
       }
       return food;

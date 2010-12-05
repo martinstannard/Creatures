@@ -139,17 +139,40 @@ $ ->
       @age = 0
       @canvas = canvas
       @id = id
-      @image = images[0]
       @health = parse_input 'health_start', 500
       @speed = Math.random() * parse_input('speed', 2)
       @x = randint(canvas.w())
       @y = randint(canvas.h())
       @heading = 0
-      @colour = new Colour
       @rand_turn = Math.random() * 2
+
+  class Predator extends Creature
+
+    constructor: (canvas, id) ->
+      super
+      @image = images[0]
       @eye_width = Math.random() * 2
       @eye_offset = Math.random()
 
+    tick: (food) ->
+      @action(food)
+      @move @speed
+      @health_check()
+
+    action: (food) ->
+      left = @can_see_left(food)
+      right = @can_see_left(food)
+      if left && right
+        return
+      if left
+        @turn_by 0.01 
+        return
+      if right
+        @turn_by -0.01 
+        return
+      else
+        @turn_by rand_range(@rand_turn) 
+      
     move: (distance) ->
       @x += Math.sin(@heading) * distance
       @y += Math.cos(@heading) * distance
@@ -167,8 +190,12 @@ $ ->
       @canvas.write(@health, @x, @y, c.health(@health))
       @canvas.write(@id, @x+14, @y+18, '#ffff00')
 
-    turn_to: (food) ->
-      @heading = @bearing food
+    health_check: ->
+      if @health <= parse_input('health_ceiling', 2500)
+        @health = @health + parse_input('health_change', -1)
+      else
+        @health = parse_input('health_ceiling', 2500)
+      @age += 1
 
     turn_by: (angle) ->
       @heading += angle
@@ -177,29 +204,6 @@ $ ->
       if @heading > 3.14159
         @heading -= 2 * 3.14159
 
-    tick: (food) ->
-      @action(food)
-      @move @speed
-      if @health <= parse_input('health_ceiling', 2500)
-        @health = @health + parse_input('health_change', -1)
-      else
-        @health = parse_input('health_ceiling', 2500)
-      @age += 1
-
-    action: (food) ->
-      left = @can_see_left(food)
-      right = @can_see_left(food)
-      if left && right
-        return
-      if left
-        @turn_by 0.01 
-        return
-      if right
-        @turn_by -0.01 
-        return
-      else
-        @turn_by rand_range(@rand_turn) 
-      
     eats: (food) ->
       if @can_eat_food(food)
         @health += food.health
@@ -251,14 +255,14 @@ $ ->
     constructor: (turtle_count, canvas) ->
       @turtles = []
       for num in [1..turtle_count] 
-        @turtles.push(new Creature(canvas, num))
+        @turtles.push(new Predator(canvas, num))
   
     tick: (food) ->
       for turtle, i in @turtles
         if turtle.eats(food) 
           food = new Food()
         turtle.tick(food)
-        @turtles[i] = new Creature(canvas, turtle.id) if turtle.dead()
+        @turtles[i] = new Predator(canvas, turtle.id) if turtle.dead()
       return food
 
     stats: ->
