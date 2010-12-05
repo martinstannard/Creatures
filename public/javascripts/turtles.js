@@ -79,8 +79,15 @@
       var distance_now;
       return (distance_now = Math.sqrt(((this.x - x) * (this.x - x)) + ((this.y - y) * (this.y - y))));
     };
-    Reporter = function() {};
+    Reporter = function() {
+      this.tracked = 1;
+      return this;
+    };
     Reporter.prototype.stats = function(turtles) {
+      this.main_report(turtles);
+      return this.tracked_report(turtles);
+    };
+    Reporter.prototype.main_report = function(turtles) {
       var _len, _ref, avg_age, avg_health, c, i, t;
       canvas.write('#', 540, 12, '#00ddff');
       canvas.write('Health', 560, 12, '#00ff00');
@@ -106,6 +113,19 @@
       canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff');
       return canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff');
     };
+    Reporter.prototype.tracked_report = function(turtles) {
+      var col, t, turtle;
+      turtle = _(turtles).detect(function(obj) {
+        return obj.id === this.tracked;
+      });
+      t = turtle[1];
+      col = '#ffff00';
+      canvas.write("id: " + t.id, 540, 180, col);
+      canvas.write("speed: " + t.speed.toFixed(2), 540, 192, col);
+      canvas.write("rand turn: " + t.rand_turn.toFixed(2), 540, 204, col);
+      canvas.write("eye width: " + t.eye_width.toFixed(2), 540, 216, col);
+      return canvas.write("eye offset: " + t.eye_offset.toFixed(2), 540, 228, col);
+    };
     Creature = function(canvas, id) {
       this.centre = 16;
       this.age = 0;
@@ -119,8 +139,8 @@
       this.heading = 0;
       this.colour = new Colour();
       this.rand_turn = Math.random() * 2;
-      this.eye_width = 0.3;
-      this.eye_offset = 0.1;
+      this.eye_width = Math.random() * 2;
+      this.eye_offset = Math.random();
       return this;
     };
     Creature.prototype.move = function(distance) {
@@ -184,7 +204,7 @@
         this.turn_by - 0.01;
         return null;
       } else {
-        return this.turn_by(rand_range(1.0));
+        return this.turn_by(rand_range(this.rand_turn));
       }
     };
     Creature.prototype.eats = function(food) {
@@ -219,7 +239,7 @@
       var bearing, centre;
       bearing = this.bearing(food);
       centre = this.heading + this.eye_offset;
-      if (bearing < this.normalized_angle(this.heading + this.eye_width) && bearing > this.normalized_angle(this.heading - this.eye_width)) {
+      if (bearing < this.normalized_angle(this.heading + (this.eye_width / 2.0)) && bearing > this.normalized_angle(this.heading - (this.eye_width / 2.0))) {
         return true;
       }
       return false;

@@ -80,7 +80,14 @@ $ ->
       
   class Reporter
 
+    constructor: ->
+      @tracked = 1
+
     stats: (turtles) ->
+      @main_report turtles 
+      @tracked_report turtles
+    
+    main_report: (turtles) ->
       canvas.write('#', 540, 12, '#00ddff')
       canvas.write('Health', 560, 12, '#00ff00')
       canvas.write('Age', 600, 12, '#ffff00')
@@ -108,6 +115,23 @@ $ ->
       canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff')
       canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
 
+    tracked_report: (turtles) ->
+      turtle = _(turtles).detect( 
+        (obj) -> 
+          obj.id == @tracked
+      )
+      t = turtle[1]
+      #@rand_turn = Math.random() * 2
+      #@eye_width = Math.random()
+      #@eye_offset = Math.random()
+      col = '#ffff00'
+      canvas.write("id: " + t.id, 540, 180, col)
+      canvas.write("speed: " + t.speed.toFixed(2), 540, 192, col)
+      canvas.write("rand turn: " + t.rand_turn.toFixed(2) , 540, 204, col) 
+      canvas.write("eye width: " + t.eye_width.toFixed(2), 540, 216, col)
+      canvas.write("eye offset: " + t.eye_offset.toFixed(2) , 540, 228, col) 
+      
+
   class Creature
 
     constructor: (canvas, id) ->
@@ -123,8 +147,8 @@ $ ->
       @heading = 0
       @colour = new Colour
       @rand_turn = Math.random() * 2
-      @eye_width = 0.3
-      @eye_offset = 0.1
+      @eye_width = Math.random() * 2
+      @eye_offset = Math.random()
 
     move: (distance) ->
       @x += Math.sin(@heading) * distance
@@ -174,7 +198,7 @@ $ ->
         @turn_by -0.01 
         return
       else
-        @turn_by rand_range(1.0) 
+        @turn_by rand_range(@rand_turn) 
       
     eats: (food) ->
       if @can_eat_food(food)
@@ -205,7 +229,7 @@ $ ->
     can_see_food: (food, offset, width) ->
       bearing = @bearing food
       centre = @heading + @eye_offset
-      if bearing < @normalized_angle(@heading + @eye_width) && bearing > @normalized_angle(@heading - @eye_width)
+      if bearing < @normalized_angle(@heading + (@eye_width / 2.0)) && bearing > @normalized_angle(@heading - (@eye_width / 2.0))
         return true
       false
 
