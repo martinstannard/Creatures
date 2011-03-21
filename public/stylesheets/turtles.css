@@ -16,7 +16,7 @@ h1 {
 
 #wrapper {
   background: silver;
-  width: 800px;
+  width: 1024px;
   margin: 0 auto;
 }
 
@@ -34,13 +34,13 @@ h1 {
 }
 
 #left-column {
-  width: 640px;
+  width: 800px;
   float: left;
 }
  
 #right-column {
   width: 160px;
-  margin-left: 640px;
+  margin-left: 800px;
 }
 
 #turtles {

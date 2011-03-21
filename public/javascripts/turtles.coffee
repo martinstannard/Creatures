@@ -73,26 +73,30 @@ $ ->
       @health += parse_input 'food_inc', 1
 
     move: ->
-      @x = Math.random() * 640
-      @y = Math.random() * 480
+      @x = Math.random() * 800
+      @y = Math.random() * 800
 
     distance_from: (x, y) ->
       distance_now = Math.sqrt(((@x - x) * (@x - x)) + ((@y - y) * (@y - y))) 
-      
+
   class Reporter
 
+    constructor: ->
+      @left = 800 - 100
+      @bottom = 800
+
     stats: (turtles) ->
-      canvas.write('#', 540, 12, '#00ddff')
-      canvas.write('Health', 560, 12, '#00ff00')
-      canvas.write('Age', 600, 12, '#ffff00')
+      canvas.write('#', @left, 12, '#00ddff')
+      canvas.write('Health', @left + 20, 12, '#00ff00')
+      canvas.write('Age', @left + 70, 12, '#ffff00')
       turtles.sort( (a, b) ->
         b[1].health - a[1].health )
       for t, i in turtles
         c = new Colour
-        canvas.write(t[1].id, 540, i * 12 + 25, '#00ddff')
-        canvas.write(t[1].health, 560, i * 12 + 25, c.health(t[1].health))
-        canvas.write(t[1].age, 600, i * 12 + 25, '#ffff00')
-      
+        canvas.write(t[1].id, @left, i * 12 + 25, '#00ddff')
+        canvas.write(t[1].health, @left + 20, i * 12 + 25, c.health(t[1].health))
+        canvas.write(t[1].age, @left + 60, i * 12 + 25, '#ffff00')
+
       avg_health = _(turtles).reduce( 
         (memo, num) -> 
           memo + num[1].health
@@ -105,9 +109,9 @@ $ ->
         0
       ) / turtles.length
 
-      canvas.write("Avg Age: " + avg_age, 540, 430, '#00ddff')
-      canvas.write("Avg Health: " + avg_health, 540, 445, '#00ddff')
-      canvas.write("Interval: " + ticks + 'ms', 540, 460, '#00ddff')
+      canvas.write("Avg Age: "    + avg_age,    @left, @bottom - 50, '#00ddff')
+      canvas.write("Avg Health: " + avg_health, @left, @bottom - 35, '#00ddff')
+      canvas.write("Interval: " + ticks + 'ms', @left, @bottom - 20, '#00ddff')
 
   class Turtle
 
